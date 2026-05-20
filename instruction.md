@@ -1,22 +1,17 @@
-# Issue: Feed generation fails on timezone-offset dates in frontmatter
+Feed generation is dropping valid published posts when frontmatter `date` values include timezone offsets.
 
-The feed builder is currently producing malformed JSON when markdown posts include `date` values with timezone offsets (examples: `2026-01-10T09:30:00-05:00`, `2026-01-10T14:30:00+00:00`).
+Observed behavior:
+- Running `python /app/scripts/build_feed.py` returns fewer posts than expected.
+- Timestamps like `2026-01-10T09:30:00-05:00` and `2026-01-10T14:30:00+00:00` are treated as invalid.
+- Sort order is currently based on string comparison instead of actual datetime values.
 
-What we need fixed:
+Required fix:
+1. Update `/app/scripts/build_feed.py` so ISO-8601 timestamps with offsets are accepted.
+2. Keep skipping malformed or incomplete frontmatter safely.
+3. Preserve output schema: root object with `posts` array; each post contains `title`, `slug`, `published_at`, `summary`.
+4. Sort published posts by real datetime descending.
+5. Do not hardcode fixture names; iterate source files generally.
 
-- `scripts/build_feed.py` should keep all valid posts in the output array.
-- Date parsing needs to correctly handle ISO-8601 timestamps with timezone offsets.
-- Output entries must keep stable ordering by published date descending.
-- The generated JSON must preserve required keys and types for downstream consumers.
-- Invalid or incomplete frontmatter should be skipped safely without crashing.
-
-Artifacts in this repo:
-
-- `content/posts/*.md` sample markdown posts.
-- `scripts/build_feed.py` current feed generator.
-- Expected output shape is a JSON object with a `posts` array.
-
-Acceptance expectation:
-
-- Running the test suite should pass once the bug is fixed.
-- Keep implementation clean and maintainable; do not hardcode specific fixture filenames.
+Acceptance criteria:
+- `bash /tests/test.sh` fails before changes and passes after applying your fix.
+- Output remains valid JSON and stable for downstream consumers.

@@ -1,18 +1,25 @@
+version = "1.0"
+
 [metadata]
-name = "feed-frontmatter-timezone-regression"
-version = "0.1.0"
-description = "Fix markdown frontmatter parsing so timezone-offset dates do not corrupt generated feed payloads."
-author = "terminal-bench"
-category = "data-processing"
+author_name = "Jairus O."
+author_email = "jairus.dev@example.com"
 difficulty = "medium"
+category = "software-engineering"
+tags = ["python", "blog-generation", "terminal-bench", "feed-generation"]
+expert_time_estimate_min = 20.0
+junior_time_estimate_min = 60.0
 
 [verifier]
-command = "bash tests/test.sh"
+timeout_sec = 300
+command = "bash /tests/test.sh"
 
 [agent]
-entrypoint = "instruction.md"
+timeout_sec = 1800
+entrypoint = "/instruction.md"
 
 [environment]
+os = "linux"
+build_timeout_sec = 300
 cpus = 2
-memory_mb = 2048
-storage_mb = 4096
+memory_mb = 4096
+storage_mb = 10240

@@ -1,0 +1,18 @@
+[metadata]
+name = "feed-frontmatter-timezone-regression"
+version = "0.1.0"
+description = "Fix markdown frontmatter parsing so timezone-offset dates do not corrupt generated feed payloads."
+author = "terminal-bench"
+category = "data-processing"
+difficulty = "medium"
+
+[verifier]
+command = "bash tests/test.sh"
+
+[agent]
+entrypoint = "instruction.md"
+
+[environment]
+cpus = 2
+memory_mb = 2048
+storage_mb = 4096

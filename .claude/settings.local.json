@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash -n \"c:/Users/Jairus/Downloads/feed-generation-validator-main/solution/solve.sh\")",
+      "Bash(bash -n \"c:/Users/Jairus/Downloads/feed-generation-validator-main/tests/test.sh\")"
+    ]
+  }
+}

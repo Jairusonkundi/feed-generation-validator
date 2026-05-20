@@ -1,0 +1,26 @@
+version = "1.0"
+
+[metadata]
+author_name = "Jairus O."
+author_email = "jairus.dev@example.com"
+difficulty = "medium"
+category = "software-engineering"
+tags = ["python", "blog-generation", "datetime-parsing"]
+expert_time_estimate_hours = 0.5
+
+difficulty_explanation = "The task requires identifying a rigid datetime parsing constraint handling ISO-8601 string zones and tracking down an unexpected alphanumeric string sort dependency instead of real chronology tracking."
+solution_explanation = "Fix the parsing utility to process trailing offset indicators cleanly and modify the array payload processing layer to evaluate true python datetimes before sorting records."
+verification_explanation = "The verification runs a custom test script ensuring strict compliance for various alternative timezone strings and structural array properties."
+
+[verifier]
+timeout_sec = 300
+
+[agent]
+timeout_sec = 1800
+
+[environment]
+os = "linux"
+build_timeout_sec = 300
+cpus = 2
+memory_mb = 4096
+storage_mb = 10240

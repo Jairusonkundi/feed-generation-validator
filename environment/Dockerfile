@@ -15,6 +15,4 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY app/ /app/
 
-RUN pip install uv && uv tool install pytest==8.3.3
-
 CMD ["bash"]

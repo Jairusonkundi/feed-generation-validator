@@ -3,14 +3,15 @@ set -euo pipefail
 
 mkdir -p /app/scripts
 
-cat > /app/scripts/build_feed.py <<'PYEOF'
+cat << 'PYEOF' > /app/scripts/build_feed.py
 #!/usr/bin/env python3
 import json
 import os
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
 
-def parse_frontmatter(text: str):
+def parse_frontmatter(text: str) -> Tuple[Optional[Dict[str, str]], str]:
     if not text.startswith("---\n"):
         return None, text
 
@@ -21,51 +22,56 @@ def parse_frontmatter(text: str):
     raw = parts[0].replace("---\n", "", 1)
     body = parts[1]
 
-    meta = {}
+    metadata: Dict[str, str] = {}
     for line in raw.splitlines():
         if not line.strip() or ":" not in line:
             continue
         key, value = line.split(":", 1)
-        meta[key.strip()] = value.strip().strip('"').strip("'")
+        metadata[key.strip()] = value.strip().strip('"').strip("'")
 
-    return meta, body
+    return metadata, body
 
 
-def parse_date(date_value: str):
+def parse_date(date_value: str) -> Optional[datetime]:
     if not isinstance(date_value, str):
         return None
     try:
-        return datetime.fromisoformat(date_value.strip().replace("Z", "+00:00"))
-    except Exception:
+        normalized = date_value.strip().replace("Z", "+00:00")
+        return datetime.fromisoformat(normalized)
+    except ValueError:
         return None
 
 
-def build_feed(content_dir: str):
-    posts = []
+def build_feed(content_dir: str) -> Dict[str, List[Dict[str, str]]]:
+    posts: List[Dict[str, object]] = []
+
+    if not os.path.isdir(content_dir):
+        return {"posts": []}
 
     for filename in sorted(os.listdir(content_dir)):
         if not filename.endswith(".md"):
             continue
 
         path = os.path.join(content_dir, filename)
-        with open(path, "r", encoding="utf-8") as f:
-            raw = f.read()
 
         try:
-            meta, body = parse_frontmatter(raw)
-            if not meta:
+            with open(path, "r", encoding="utf-8") as handle:
+                raw = handle.read()
+
+            metadata, body = parse_frontmatter(raw)
+            if not metadata:
                 continue
 
-            title = meta.get("title")
-            slug = meta.get("slug")
-            date_str = meta.get("date")
-            published = meta.get("published", "true").lower() == "true"
+            title = metadata.get("title")
+            slug = metadata.get("slug")
+            date_value = metadata.get("date")
+            published = metadata.get("published", "true").strip().lower() == "true"
 
-            if not title or not slug or not date_str or not published:
+            if not title or not slug or not date_value or not published:
                 continue
 
-            parsed = parse_date(date_str)
-            if parsed is None:
+            published_dt = parse_date(date_value)
+            if published_dt is None:
                 continue
 
             summary = body.strip().split("\n\n", 1)[0].strip()
@@ -74,35 +80,47 @@ def build_feed(content_dir: str):
                 {
                     "title": title,
                     "slug": slug,
-                    "published_at": date_str,
+                    "published_at": date_value,
                     "summary": summary,
-                    "_published_dt": parsed,
+                    "_published_dt": published_dt,
                 }
             )
-        except Exception as exc:
-            print(f"warning: skipping {filename}: {exc}")
+        except Exception:
             continue
 
-    posts.sort(key=lambda p: p["_published_dt"], reverse=True)
+    posts.sort(key=lambda post: post["_published_dt"], reverse=True)
 
-    normalized_posts = [
-        {
-            "title": p["title"],
-            "slug": p["slug"],
-            "published_at": p["published_at"],
-            "summary": p["summary"],
-        }
-        for p in posts
-    ]
+    return {
+        "posts": [
+            {
+                "title": post["title"],
+                "slug": post["slug"],
+                "published_at": post["published_at"],
+                "summary": post["summary"],
+            }
+            for post in posts
+        ]
+    }
 
-    return {"posts": normalized_posts}
+
+def main() -> None:
+    app_root = os.path.dirname(os.path.dirname(__file__))
+    content_dir = os.path.join(app_root, "content", "posts")
+
+    output_payload = build_feed(content_dir)
+
+    output_dir = os.path.join(app_root, "output")
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_path = os.path.join(output_dir, "feed.json")
+    with open(output_path, "w", encoding="utf-8") as handle:
+        json.dump(output_payload, handle, indent=2)
+
+    print(json.dumps(output_payload, indent=2))
 
 
 if __name__ == "__main__":
-    base = os.path.dirname(os.path.dirname(__file__))
-    content = os.path.join(base, "content", "posts")
-    output = build_feed(content)
-    print(json.dumps(output, indent=2))
+    main()
 PYEOF
 
 chmod +x /app/scripts/build_feed.py
